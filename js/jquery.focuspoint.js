@@ -15,32 +15,22 @@
 
 	//Setup a container instance
 	var setupContainer = function($el) {
-		var imageSrc = $el.find('img').attr('src');
-		$el.data('imageSrc', imageSrc);
 
-		resolveImageSize(imageSrc, function(err, dim) {
-			$el.data({
-				imageW: dim.width,
-				imageH: dim.height
-			});
-			adjustFocus($el);
-		});
-	};
-
-	//Get the width and the height of an image
-	//by creating a new temporary image
-	var resolveImageSize = function(src, cb) {
-		//Create a new image and set a
-		//handler which listens to the first
-		//call of the 'load' event.
-		$('<img />').one('load', function() {
-			//'this' references to the new
-			//created image
-			cb(null, {
-				width: this.width,
-				height: this.height
-			});
-		}).attr('src', src);
+		$el.find('img')
+			.eq(0)
+			.off('load.focuspoint')
+			.on('load.focuspoint', function(){
+				$el.data({
+					imageW: this.naturalWidth || this.width,
+					imageH: this.naturalHeight || this.height
+				});
+				adjustFocus($el);
+			})
+			.filter(function(){
+				return this.complete;
+			})
+			.trigger('load.focuspoint')
+		;
 	};
 
 	//Create a throttled version of a function
@@ -77,9 +67,8 @@
 	var adjustFocus = function($el) {
 		var imageW = $el.data('imageW');
 		var imageH = $el.data('imageH');
-		var imageSrc = $el.data('imageSrc');
 
-		if (!imageW && !imageH && !imageSrc) {
+		if (!imageW && !imageH) {
 			return setupContainer($el); //Setup the container first
 		}
 
